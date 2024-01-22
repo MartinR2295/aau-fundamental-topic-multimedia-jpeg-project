@@ -1,6 +1,13 @@
 # JPEG Project
 ## Martin Rader - 11844898
 
+## Explanation Video
+To prevent installing all of these packages, I also prepared a short explanation video where I demonstrate the scripts, and I also
+showed the code a little bit. But I kept it short, so the rest of the code explanation you can find in this README.md file, and in the coments of 
+the code.
+
+Link to the video: https://youtu.be/6aU48VqCYzY
+
 ## Needed Packages
 numpy - 1.25.0<br>
 opencv-python - 4.8.0.74<br>
