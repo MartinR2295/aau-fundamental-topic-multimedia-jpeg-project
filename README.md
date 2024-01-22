@@ -117,3 +117,14 @@ Example usage:
 ```
 ./psnr.py -o test.png -c result.png
 ```
+
+## Example usage to use the single scripts instead of the encode_decode test script
+
+```
+# encode the image
+./encode.py -i test.png -o encoded.bin -s 16 -c 1
+# decode the image
+./decode.py -i encoded.bin -o result.png
+# calculate the psnr
+./psnr.py -o test.png -c result.png
+```
