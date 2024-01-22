@@ -1,48 +1,24 @@
 # outsourced core and utils to extra files, to keep the main script simple and short
 # with this approach it is also easier to switch from cv2 to any other framework
-from core.core import *
-from core.utils import *
-
+from core.encode_decode_helper import *
+from core.psnr_utils import *
 
 def main():
 
     subsampling_factor = 16  # compress the u and v channels to 1/16
     quality_ratio = 100 # higher is better
+    image_file = "test.png"
+    encoded_file = "encoded.bin"
+    output_file = "result.png"
 
-    img = read_img("test.png")
-    yuv_img = rgb_to_yuv(img)
-    y, u, v = split_channels(yuv_img)
-    y_obj, u_obj, v_obj = compress(y, u, v, subsampling_factor, quality_ratio)
+    # encode it and save it to a file
+    image_to_compressed_bin(image_file, encoded_file, subsampling_factor=subsampling_factor, compression_rate=quality_ratio)
 
-    # encode each object
-    y_dict = y_obj.to_dict()
-    u_dict = u_obj.to_dict()
-    v_dict = v_obj.to_dict()
+    # load, decode it and save the decoded png file
+    compressed_bin_to_image(encoded_file, output_file)
 
-    # save it in bin format
-
-    # outsource this part to a decompress file
-
-    # load it from file
-
-    # map object from dict
-    y_obj = Channel.from_dict(y_dict)
-    y_obj.decode()
-
-    u_obj = Channel.from_dict(u_dict)
-    u_obj.decode()
-
-    v_obj = Channel.from_dict(v_dict)
-    v_obj.decode()
-
-    # split the channels
-    decompressed_y, decompressed_u, decompressed_v = decompress(y_obj, u_obj, v_obj)
-
-    # merge channels
-    decompressed_yuv_img = merge_channels(decompressed_y, decompressed_u, decompressed_v)
-    # decompressed_yuv_img = merge_channels(y, u, v)
-    decompressed_rgb_img = yuv_to_rgb(decompressed_yuv_img)
-    # decompressed_rgb_img = yuv_to_rgb(yuv_img)
-    save_img(decompressed_rgb_img, "result.png")
+    # calculate psnr
+    psnr = calc_psnr(read_img(image_file), read_img(output_file))
+    print(f"PSNR: {psnr}")
 
 main()
