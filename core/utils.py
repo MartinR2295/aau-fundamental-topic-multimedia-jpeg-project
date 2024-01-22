@@ -32,3 +32,4 @@ def save_img(rgb_img, path):
 
 def read_img(path):
     return cv2.imread(path)
+
