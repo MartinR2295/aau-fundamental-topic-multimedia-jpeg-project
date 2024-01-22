@@ -11,6 +11,7 @@ class Channel:
         self.compressed_blocks = None
         self.subsampled_data = None
         self.subsampling_factor = None
+        self.subsampled_shape = None
         self.quantization_table = None
         self.huffman_codec = None
         self.encoded_block = None
@@ -18,13 +19,18 @@ class Channel:
     def subsample(self, subsampling_factor):
         self.subsampling_factor = subsampling_factor
         self.subsampled_data = cv2.resize(self.data, (self.data.shape[1] // subsampling_factor, self.data.shape[0] // subsampling_factor))
+        self.subsampled_shape = self.subsampled_data.shape
 
     def de_subsample(self):
         self.data = cv2.resize(self.subsampled_data, (self.shape[1], self.shape[0]))
 
     def compress(self, quantization_table):
+        data = self.data
+        if self.subsampled_data is not None:
+            data = self.subsampled_data
+
         # split y part to 8x8 blocks
-        y_blocks = split_to_blocks_with_padding(self.data)
+        y_blocks = split_to_blocks_with_padding(data)
 
         # do dct to each block (need to convert to values between 0 and 1)
         dct_blocks = dct_block_array(y_blocks/255.0)*255
@@ -41,7 +47,10 @@ class Channel:
     def de_compress(self):
         de_quantized_blocks = de_quantize_dct_blocks(self.compressed_blocks, self.quantization_table)
         inversed_dct_blocks = (inverse_dct_block_array(de_quantized_blocks/255.0)*255.0).astype(np.uint8)
-        self.data = reconstruct_from_blocks(inversed_dct_blocks, self.shape)
+        if self.subsampling_factor:
+            self.subsampled_data = reconstruct_from_blocks(inversed_dct_blocks, self.subsampled_shape)
+        else:
+            self.data = reconstruct_from_blocks(inversed_dct_blocks, self.shape)
 
     """
     Compress it first
@@ -53,6 +62,8 @@ class Channel:
 
     def decode(self):
         height, width = self.shape
+        if self.subsampled_shape:
+            height, width = self.subsampled_shape
         block_size = 8
         num_blocks_y = (height + block_size - 1) // block_size
         num_blocks_x = (width + block_size - 1) // block_size
@@ -65,6 +76,7 @@ class Channel:
             "width": self.shape[1],
             "huffman_codec": self.huffman_codec,
             "subsampling_factor": self.subsampling_factor,
+            "subsampled_shape": self.subsampled_shape,
             "quantization_table": self.quantization_table
         }
 
@@ -74,6 +86,7 @@ class Channel:
         channel.encoded_block = dict.get('encoded_block')
         channel.huffman_codec = dict.get('huffman_codec')
         channel.subsampling_factor = dict.get('subsampling_factor')
+        channel.subsampled_shape = dict.get("subsampled_shape")
         channel.quantization_table = dict.get('quantization_table')
         return channel
 
@@ -87,17 +100,26 @@ def compress(y, u, v, subsampling_factor, quality_ratio=100):
     u_obj.subsample(subsampling_factor)
     v_obj.subsample(subsampling_factor)
 
+    # compress u and v
+    uv_quantization_table = generate_quantization_matrix(quality_ratio, use_chrominance_table=True)
+    u_obj.compress(uv_quantization_table)
+    v_obj.compress(uv_quantization_table)
+
     # do y compression part
     y_quantization_table = generate_quantization_matrix(quality_ratio)
     y_obj.compress(y_quantization_table)
 
     # encode each channel
     y_obj.encode()
+    u_obj.encode()
+    v_obj.encode()
 
     return y_obj, u_obj, v_obj
 
 def decompress(y_obj: Channel, u_obj: Channel, v_obj: Channel):
-    # de_subsampling
+    # u and v channels
+    u_obj.de_compress()
+    v_obj.de_compress()
     u_obj.de_subsample()
     v_obj.de_subsample()
 

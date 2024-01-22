@@ -16,6 +16,8 @@ def main():
 
     # encode each object
     y_dict = y_obj.to_dict()
+    u_dict = u_obj.to_dict()
+    v_dict = v_obj.to_dict()
 
     # save it in bin format
 
@@ -26,6 +28,12 @@ def main():
     # map object from dict
     y_obj = Channel.from_dict(y_dict)
     y_obj.decode()
+
+    u_obj = Channel.from_dict(u_dict)
+    u_obj.decode()
+
+    v_obj = Channel.from_dict(v_dict)
+    v_obj.decode()
 
     # split the channels
     decompressed_y, decompressed_u, decompressed_v = decompress(y_obj, u_obj, v_obj)
