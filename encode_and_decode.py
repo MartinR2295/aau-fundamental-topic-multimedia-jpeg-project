@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # outsourced core and utils to extra files, to keep the main script simple and short
 # with this approach it is also easier to switch from cv2 to any other framework
 from core.encode_decode_helper import *
