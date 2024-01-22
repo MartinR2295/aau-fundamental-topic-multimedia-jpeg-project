@@ -12,17 +12,23 @@ def main():
     img = read_img("test.png")
     yuv_img = rgb_to_yuv(img)
     y, u, v = split_channels(yuv_img)
-    compressed_y, compressed_u, compressed_v, \
-        y_quantization_table, uv_quantization_table, original_shape = compress(y, u, v, subsampling_factor, quality_ratio)
+    y_obj, u_obj, v_obj = compress(y, u, v, subsampling_factor, quality_ratio)
+
+    # encode each object
+    y_dict = y_obj.to_dict()
 
     # save it in bin format
 
     # outsource this part to a decompress file
 
+    # load it from file
+
+    # map object from dict
+    y_obj = Channel.from_dict(y_dict)
+    y_obj.decode()
+
     # split the channels
-    decompressed_y, decompressed_u, decompressed_v = decompress(compressed_y, compressed_u, compressed_v,
-                                                                y_quantization_table, uv_quantization_table,
-                                                                original_shape)
+    decompressed_y, decompressed_u, decompressed_v = decompress(y_obj, u_obj, v_obj)
 
     # merge channels
     decompressed_yuv_img = merge_channels(decompressed_y, decompressed_u, decompressed_v)
